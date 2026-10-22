@@ -129,21 +129,11 @@ The Child Development Platform is a web application that lets parents and caregi
 
 ---
 
-## 5. Use Case Diagram (optional)
+## 5. Use Case Diagram
 
-```mermaid
-flowchart LR
-    Parent(["Parent / Caregiver"])
-    Admin(["Administrator"])
-    Parent --> UC1(Manage child profiles)
-    Parent --> UC2(Record growth)
-    Parent --> UC3(Track milestones)
-    Parent --> UC4(View activities)
-    Parent --> UC5(Manage health records and vaccinations)
-    Parent --> UC6(View dashboard and reports)
-    Admin --> UC7(Manage milestone and activity catalogs)
-    Admin --> UC8(Manage users)
-```
+The diagram shows the two types of users and the main use cases of the system. Password reset, growth percentiles, email reminders and PDF export extend the main use cases and are modeled as `«extend»` use cases.
+
+![Use case diagram of the Child Development Platform](img/use-case-diagram.png)
 
 ---
 
