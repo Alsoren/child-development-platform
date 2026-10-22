@@ -1,6 +1,6 @@
 # Software Requirements Specification (SRS)
 
-**Team name:** Child Development Platform Team  
+**Team name:** Kardeşler Software  
 **Version:** ☑ First version (Week 6) ☐ Final (Week 10)  
 **Last updated:** 2026-10-22
 
@@ -125,7 +125,7 @@ The Child Development Platform is a web application that lets parents and caregi
 |---|---|---|
 | Flow 1: Register, log in and add a child | FR-M1-01, FR-M1-02, FR-M2-01, FR-M2-02 | **Given** a visitor without an account **When** they register, log in and submit the child form with valid data **Then** the child appears in their child list. |
 | Flow 2: Record a growth measurement | FR-M3-01, FR-M3-02, FR-M3-03 | **Given** a logged-in parent with a child profile **When** they submit a growth entry with valid height and weight **Then** the entry is saved and appears in the growth table and chart. |
-| Flow 3: Track a vaccination | FR-M6-02, FR-M6-03, FR-M6-04, FR-M7-01 | **Given** a logged-in parent with a child who has a due vaccination **When** they mark the vaccination as done **Then** it is shown as completed and no longer appears as upcoming or overdue. |
+| Flow 3: Track a vaccination | FR-M6-02, FR-M6-03, FR-M6-04 | **Given** a logged-in parent with a child who has a due vaccination **When** they mark the vaccination as done **Then** it is shown as completed and no longer appears as upcoming or overdue. |
 
 ---
 
@@ -133,8 +133,8 @@ The Child Development Platform is a web application that lets parents and caregi
 
 ```mermaid
 flowchart LR
-    Parent([Parent / Caregiver])
-    Admin([Administrator])
+    Parent(["Parent / Caregiver"])
+    Admin(["Administrator"])
     Parent --> UC1(Manage child profiles)
     Parent --> UC2(Record growth)
     Parent --> UC3(Track milestones)
@@ -151,4 +151,4 @@ flowchart LR
 
 | Date | Change | By |
 |---|---|---|
-| 2026-10-22 | First version | Team |
+| 2026-10-22 | First version | Kardeşler Software |
