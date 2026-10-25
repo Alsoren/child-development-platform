@@ -43,14 +43,14 @@ The owner is responsible for the feature end to end (screen, API, data and tests
 
 | Epic | Owner | Number of tasks | Planned sprint(s) |
 |---|---|---|---|
-| M1 – Login and roles | Ahmet Alp Keleş | _Fill from Jira_ | Sprint 2, 3 |
-| M2 – Linking specialists | Ahmet Alp Keleş | _Fill from Jira_ | Sprint 3 |
-| M3 – Weekly schedule | Okan Can Nazlı | _Fill from Jira_ | Sprint 3 |
-| M4 – Tasks | Okan Can Nazlı | _Fill from Jira_ | Sprint 3 |
-| M5 – Specialist entries | Mehmet Belen | _Fill from Jira_ | Sprint 4 |
-| M6 – Documents | Mehmet Belen | _Fill from Jira_ | Sprint 4 |
-| M7 – Weekly statistics | Ahmet Alp Keleş | _Fill from Jira_ | Sprint 4 |
-| M8 – Role-based AI summary | Okan Can Nazlı | _Fill from Jira_ | Sprint 4, 5 |
+| M1 – Login and roles | Ahmet Alp Keleş | 6 | Sprint 2, 3 |
+| M2 – Linking specialists | Ahmet Alp Keleş | 5 | Sprint 3 |
+| M3 – Weekly schedule | Okan Can Nazlı | 3 | Sprint 3 |
+| M4 – Tasks | Okan Can Nazlı | 3 | Sprint 3 |
+| M5 – Specialist entries | Mehmet Belen | 4 | Sprint 4 |
+| M6 – Documents | Mehmet Belen | 4 | Sprint 4 |
+| M7 – Weekly statistics | Ahmet Alp Keleş | 3 | Sprint 4 |
+| M8 – Role-based AI summary | Okan Can Nazlı | 6 | Sprint 4, 5 |
 
 ### Sprint Plan
 
