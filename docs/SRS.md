@@ -215,7 +215,7 @@ For every requirement the team answers five questions in the design document (SD
 | # | Item | Status |
 |---|---|---|
 | A1 | Parent and specialist accounts are created by the seed script; self-registration and email invitations are not required. | Assumption, confirm with instructor |
-| A2 | The parent creates the child's profile and the child's login account (name, email, password). | Assumption |
+| A2 | The seed script creates the parents, the child profiles and the children's login accounts; creating a child inside the application is not required. | Assumption |
 | A3 | A specialist's "type" is one of: teacher, psychologist, doctor, special education teacher, coach. | Assumption |
 | A4 | Development areas: Language, Motor, Social, Cognitive, Emotional. | Assumption |
 | A5 | Uploaded documents: PDF or image (PNG/JPEG), up to 5 MB each. | Assumption |
