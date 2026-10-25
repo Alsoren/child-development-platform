@@ -16,7 +16,7 @@ flowchart LR
     Frontend -->|"HTTP + JSON, JWT"| Backend["Backend / REST API (Node.js + Express)"]
     Backend --> DB[(SQLite)]
     Backend --> Files[("Uploaded files (local folder)")]
-    Backend -->|"API key, backend only"| AI["External AI provider (Gemini or GitHub Models) / Mock"]
+    Backend -->|"API key, backend only"| AI["External AI provider (Gemini API) / Mock"]
 ```
 
 Main rules that shape the design:
@@ -32,7 +32,7 @@ Main rules that shape the design:
 | Frontend | React (Vite), React Router |
 | Backend | Node.js, Express, JWT (jsonwebtoken), bcrypt (password hashing), multer (file upload) |
 | Database | SQLite (accessed with better-sqlite3), schema and seed script in the repository |
-| AI | Gemini API or GitHub Models behind one backend module, with a mock mode |
+| AI | Gemini API behind one backend module, with a mock mode |
 | Testing | Jest + Supertest (unit and API), Vitest (frontend and unit), Playwright (end-to-end) |
 | CI | GitHub Actions |
 | Tracking | Jira (key SCRUM), GitHub pull requests |
@@ -50,7 +50,7 @@ Main rules that shape the design:
 | M5 – Specialist entries | `EntryController`, `EntryService`, `Entry` model | EntryForm, EntryList with "edited" mark | US-M5-01 … 04 |
 | M6 – Documents | `DocumentController`, `DocumentService`, upload middleware, `Document` model | DocumentList, upload form | US-M6-01 … 04 |
 | M7 – Weekly statistics | `StatsController`, `StatsService` (exact calculation) | WeeklyStats panel on the dashboard | US-M7-01 … 03 |
-| M8 – Role-based AI summary | `SummaryController`, `SummaryService`, `AiClient` with `GeminiProvider`, `GithubModelsProvider`, `MockProvider`, prompt builders, `Summary` and `SummaryFeedback` models | SummaryCard with "AI-generated" label, source links and feedback buttons | US-M8-01 … 06 |
+| M8 – Role-based AI summary | `SummaryController`, `SummaryService`, `AiClient` with `GeminiProvider`, `MockProvider`, prompt builders, `Summary` and `SummaryFeedback` models | SummaryCard with "AI-generated" label, source links and feedback buttons | US-M8-01 … 06 |
 
 ---
 
@@ -141,7 +141,7 @@ erDiagram
         string reader_role "parent, specialist"
         string week_start
         string text
-        string provider "gemini, github, mock"
+        string provider "gemini, mock"
         string created_at
     }
     SUMMARY_SOURCE {
@@ -228,7 +228,7 @@ flowchart LR
     Select --> Prompt["3. Build the role prompt (parent or specialist)"]
     Prompt --> Provider{"AI_MODE"}
     Provider -->|"mock (tests, CI)"| Mock["MockProvider: fixed sample answer"]
-    Provider -->|"live"| Live["Gemini or GitHub Models"]
+    Provider -->|"live"| Live["Gemini API"]
     Mock --> Save["4. Save summary + source record ids"]
     Live --> Save
     Save --> Resp["5. Return summary labelled AI-generated"]
@@ -358,3 +358,4 @@ The application must install and run locally by following the README (a release 
 |---|---|---|
 | 2026-10-22 | First version (child growth tracking concept, PostgreSQL) | Kardeşler Software |
 | 2026-10-25 | Rewritten to match the Term Project Assignment: SQLite, roles parent/specialist/child, modules M1–M8, access rules, AI module with mock mode | Kardeşler Software |
+| 2026-10-25 | Decided A7 (Gemini API) and A8 (English); removed the GitHub Models option | Kardeşler Software |

@@ -27,7 +27,7 @@ A child's development is followed by many people at once: parents, teachers, psy
 | Area | Constraint |
 |---|---|
 | Technology | React (Vite), Node.js + Express, SQLite, JWT authentication. Tests: Jest + Supertest, Vitest, Playwright. CI: GitHub Actions. Work tracking: Jira. |
-| AI | Gemini API or GitHub Models (team choice, see Section 8), accessed through one backend module with a mandatory mock mode for tests and CI. |
+| AI | Gemini API (assumption A7, Section 8), accessed through one backend module with a mandatory mock mode for tests and CI. |
 | Data | Only synthetic data, created by a seed script. No real personal data at any stage. |
 | Safety | The AI never makes decisions or suggests a diagnosis or treatment, and receives only data the reader is allowed to see. |
 | Running | The application runs locally by following the README. No cloud deployment. |
@@ -215,13 +215,13 @@ For every requirement the team answers five questions in the design document (SD
 | # | Item | Status |
 |---|---|---|
 | A1 | Parent and specialist accounts are created by the seed script; self-registration and email invitations are not required. | Assumption, confirm with instructor |
-| A2 | The parent creates the child's profile and the child's login account (name, email, password). | Assumption |
+| A2 | The seed script creates the parents, the child profiles and the children's login accounts; creating a child inside the application is not required. | Assumption |
 | A3 | A specialist's "type" is one of: teacher, psychologist, doctor, special education teacher, coach. | Assumption |
 | A4 | Development areas: Language, Motor, Social, Cognitive, Emotional. | Assumption |
 | A5 | Uploaded documents: PDF or image (PNG/JPEG), up to 5 MB each. | Assumption |
 | A6 | A week runs Monday to Sunday and a task belongs to the week of its due date. | Assumption |
-| A7 | AI provider (Gemini API or GitHub Models) | **Open: team decision** |
-| A8 | Interface language (Turkish or English) | **Open: team decision** |
+| A7 | AI provider: Gemini API, accessed through one backend module. | Decided |
+| A8 | Interface language: English (screens, seed data and AI prompts). | Decided |
 
 ---
 
@@ -231,3 +231,4 @@ For every requirement the team answers five questions in the design document (SD
 |---|---|---|
 | 2026-10-22 | First version (child growth tracking concept) | Kardeşler Software |
 | 2026-10-25 | Rewritten to match the Term Project Assignment: roles parent/specialist/child, modules M1–M8, SQLite, AI summary, release plan | Kardeşler Software |
+| 2026-10-25 | Decided A7 (Gemini API) and A8 (English); removed the GitHub Models option | Kardeşler Software |

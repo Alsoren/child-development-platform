@@ -39,7 +39,7 @@
 
 ### Work Packages (Epics)
 
-The owner is responsible for the feature end to end (screen, API, data and tests). Owners are a proposal; make them match Jira.
+The owner is responsible for the feature end to end (screen, API, data and tests).
 
 | Epic | Owner | Number of tasks | Planned sprint(s) |
 |---|---|---|---|
