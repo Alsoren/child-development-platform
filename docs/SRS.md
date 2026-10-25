@@ -220,8 +220,8 @@ For every requirement the team answers five questions in the design document (SD
 | A4 | Development areas: Language, Motor, Social, Cognitive, Emotional. | Assumption |
 | A5 | Uploaded documents: PDF or image (PNG/JPEG), up to 5 MB each. | Assumption |
 | A6 | A week runs Monday to Sunday and a task belongs to the week of its due date. | Assumption |
-| A7 | AI provider (Gemini API or GitHub Models) | **Open: team decision** |
-| A8 | Interface language (Turkish or English) | **Open: team decision** |
+| A7 | AI provider (Gemini API or GitHub Models) | Gemini API |
+| A8 | Interface language (Turkish or English) | English |
 
 ---
 
