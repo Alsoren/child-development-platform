@@ -17,7 +17,7 @@ export default function LoginPage() {
       const { token, user } = await login(email, password);
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      navigate('/');
+      navigate(`/${user.role}`);
     } catch (err) {
       setError(err.message);
     } finally {
