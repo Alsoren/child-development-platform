@@ -10,4 +10,3 @@ async function request(path, body) {
 }
 
 export const login = (email, password) => request('login', { email, password });
-export const register = (payload) => request('register', payload);
