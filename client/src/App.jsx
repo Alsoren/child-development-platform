@@ -1,0 +1,22 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import ParentPage from './pages/ParentPage';
+import SpecialistPage from './pages/SpecialistPage';
+import ChildPage from './pages/ChildPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import SkeletonPage from './pages/SkeletonPage';
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/parent" element={<ProtectedRoute role="parent"><ParentPage /></ProtectedRoute>} />
+        <Route path="/specialist" element={<ProtectedRoute role="specialist"><SpecialistPage /></ProtectedRoute>} />
+        <Route path="/child" element={<ProtectedRoute role="child"><ChildPage /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="/skeleton" element={<SkeletonPage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
