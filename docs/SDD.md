@@ -1,18 +1,18 @@
 # Software Design Document (SDD)
 
 **Team name:** Kardeşler Software  
-**Version:** ☑ First version ☐ Final (Week 6)  
-**Last updated:** 2026-10-25
+**Version:** ☐ First version ☑ Final (Week 6)  
+**Last updated:** 2026-11-01
 
 ---
 
 ## 1. Architecture Overview
 
-The system is a three-tier web application: a React single-page frontend talks to a REST API built with Node.js and Express, which stores data in a SQLite database. The backend is also the only component that talks to the external AI provider. The backend is organized in layers (routes, middleware, services, data access) with one set of components per module.
+The system is a three-tier web application: a React single-page frontend talks to a REST API built with Node.js and Express, which stores data in a SQLite database. The backend is also the only component that talks to the external AI provider. The backend is organized in layers: routes (URL and middleware), controllers (HTTP in and out), services (business rules) and repositories (SQL), with one set of files per module.
 
 ```mermaid
 flowchart LR
-    User --> Frontend["Frontend (React + Vite)"]
+    User --> Frontend["Frontend (React + Vite + Tailwind CSS)"]
     Frontend -->|"HTTP + JSON, JWT"| Backend["Backend / REST API (Node.js + Express)"]
     Backend --> DB[(SQLite)]
     Backend --> Files[("Uploaded files (local folder)")]
@@ -29,34 +29,43 @@ Main rules that shape the design:
 
 | Layer | Technology |
 |---|---|
-| Frontend | React (Vite), React Router |
-| Backend | Node.js, Express, JWT (jsonwebtoken), bcrypt (password hashing), multer (file upload) |
-| Database | SQLite (accessed with better-sqlite3), schema and seed script in the repository |
-| AI | Gemini API behind one backend module, with a mock mode |
-| Testing | Jest + Supertest (unit and API), Vitest (frontend and unit), Playwright (end-to-end) |
-| CI | GitHub Actions |
+| Runtime | Node.js 22 or later, npm |
+| Frontend | React 19 (Vite), React Router, Tailwind CSS 4 (`@tailwindcss/vite`), ESLint |
+| Backend | Express 5, JWT (jsonwebtoken), bcrypt (password hashing), cors, dotenv, multer (file upload, planned for M6) |
+| Database | SQLite (accessed with better-sqlite3), schema in `server/src/db/schema.sql`, seed script in `server/src/db/seed.js` |
+| AI | Gemini API behind one backend module, with a mock provider (planned for M8) |
+| Testing | Jest + Supertest (server, runs in CI), Vitest (client, planned), Playwright (end-to-end, planned) |
+| CI | GitHub Actions (`.github/workflows/ci.yml`, job `ci`) |
 | Tracking | Jira (key SCRUM), GitHub pull requests |
 
 ---
 
 ## 2. Module Design
 
-| Module | Main backend components | Main frontend components | Implements |
-|---|---|---|---|
-| M1 – Login and roles | `AuthController`, `AuthService`, `authenticate` and `requireRole` middleware, `User` model | Login page, role-based router and navigation | US-M1-01 … 05 |
-| M2 – Linking specialists | `LinkController`, `LinkService`, `requireChildAccess` middleware, `SpecialistLink` model | Linked specialists page (parent), child list (specialist) | US-M2-01 … 05 |
-| M3 – Weekly schedule | `EventController`, `EventService`, `Event` model | WeeklyCalendar, EventForm, upcoming events list (child) | US-M3-01 … 03 |
-| M4 – Tasks | `TaskController`, `TaskService`, `Task` model | TaskForm, TaskList (assigner view), MyTasks (child) | US-M4-01 … 03 |
-| M5 – Specialist entries | `EntryController`, `EntryService`, `Entry` model | EntryForm, EntryList with "edited" mark | US-M5-01 … 04 |
-| M6 – Documents | `DocumentController`, `DocumentService`, upload middleware, `Document` model | DocumentList, upload form | US-M6-01 … 04 |
-| M7 – Weekly statistics | `StatsController`, `StatsService` (exact calculation) | WeeklyStats panel on the dashboard | US-M7-01 … 03 |
-| M8 – Role-based AI summary | `SummaryController`, `SummaryService`, `AiClient` with `GeminiProvider`, `MockProvider`, prompt builders, `Summary` and `SummaryFeedback` models | SummaryCard with "AI-generated" label, source links and feedback buttons | US-M8-01 … 06 |
+File names follow the pattern of the existing auth code: `xRoutes.js`, `xController.js`, `xService.js`, `xRepository.js` under `server/src/`, and pages under `client/src/pages/`.
+
+| Module | Routes | Controllers, services, repositories | Frontend pages and components | Implements |
+|---|---|---|---|---|
+| M1 – Login and roles | `authRoutes` (`/api/auth`) | `authController`, `authService`, `usersRepository`; middleware `authenticate`, `requireRole` | `LoginPage`, `ProtectedRoute`, `AppLayout`, home pages `ParentPage`, `SpecialistPage`, `ChildPage` | US-M1-01 … 05 |
+| M2 – Linking specialists | `linkRoutes` (`/api/children`) | `linkController`, `linkService`, `linksRepository`; middleware `requireChildAccess` | Linked specialists page (parent), child list (specialist) | US-M2-01 … 05 |
+| M3 – Weekly schedule | `eventRoutes` | `eventController`, `eventService`, `eventsRepository` | `WeeklyCalendar`, `EventForm`, upcoming events list (child) | US-M3-01 … 03 |
+| M4 – Tasks | `taskRoutes` | `taskController`, `taskService`, `tasksRepository` | `TaskForm`, `TaskList` (assigner view), `MyTasks` (child) | US-M4-01 … 03 |
+| M5 – Specialist entries | `entryRoutes` | `entryController`, `entryService`, `entriesRepository` | `EntryForm`, `EntryList` with "edited" mark | US-M5-01 … 04 |
+| M6 – Documents | `documentRoutes` | `documentController`, `documentService`, `documentsRepository`; upload middleware (multer) | `DocumentList`, upload form | US-M6-01 … 04 |
+| M7 – Weekly statistics | `statsRoutes` | `statsController`, `statsService` (exact calculation, reads `tasksRepository`) | `WeeklyStats` panel on the dashboard | US-M7-01 … 03 |
+| M8 – Role-based AI summary | `summaryRoutes` | `summaryController`, `summaryService`, `aiClient` with `geminiProvider` and `mockProvider`, prompt builders, `summariesRepository` | `SummaryCard` with "AI-generated" label, source links and feedback buttons | US-M8-01 … 06 |
+
+Current state (walking skeleton, v0.0): the login endpoint, a health check and a sample task endpoint exist on the backend, and the login page, the three role home pages and the route guard exist on the frontend. All other components are planned for Sprints 2 to 5 (see PMP-2).
 
 ---
 
 ## 3. Data Model
 
-SQLite stores dates and times as ISO 8601 text. Foreign keys are enabled with `PRAGMA foreign_keys = ON`. Uploaded files are stored in a local folder that is not committed to Git; only metadata is in the database.
+The schema is in `server/src/db/schema.sql` and the first diagram below shows exactly the tables it creates (M1–M4). Tables for M5–M8 are added to the same file when those modules start; they are shown in the second diagram.
+
+SQLite stores dates and times as ISO 8601 text: a date is `YYYY-MM-DD`, a date with time is `YYYY-MM-DD HH:MM`. Foreign keys are enabled with `PRAGMA foreign_keys = ON` in `server/src/db/index.js`. Uploaded files are stored in `server/uploads/`, which is not committed to Git; only metadata is in the database.
+
+### Tables in schema.sql (M1–M4)
 
 ```mermaid
 erDiagram
@@ -65,28 +74,24 @@ erDiagram
     CHILD ||--o{ SPECIALIST_LINK : has
     USER ||--o{ SPECIALIST_LINK : "specialist in"
     CHILD ||--o{ EVENT : has
+    USER ||--o{ EVENT : creates
     CHILD ||--o{ TASK : has
-    CHILD ||--o{ ENTRY : has
-    CHILD ||--o{ DOCUMENT : has
-    CHILD ||--o{ SUMMARY : has
-    SUMMARY ||--o{ SUMMARY_SOURCE : "based on"
-    SUMMARY ||--o{ SUMMARY_FEEDBACK : receives
-    USER ||--o{ SUMMARY_FEEDBACK : gives
+    USER ||--o{ TASK : assigns
 
     USER {
         int id PK
-        string name
         string email UK
         string password_hash
         string role "parent, specialist, child"
+        string name
         string created_at
     }
     CHILD {
         int id PK
         int parent_id FK
-        int user_id FK "the child's own login account, unique"
+        int user_id FK "the child's own login account, unique, nullable"
         string name
-        string date_of_birth
+        string birth_date "nullable"
     }
     SPECIALIST_LINK {
         int id PK
@@ -100,21 +105,37 @@ erDiagram
         int child_id FK
         int created_by FK
         string title
-        string event_date
-        string start_time
-        string end_time
+        string start_at
+        string end_at "nullable, after start_at"
+        string created_at
     }
     TASK {
         int id PK
         int child_id FK
         int assigned_by FK
         string title
-        string description
-        string development_area
+        string description "nullable"
+        string development_area "Language, Motor, Social, Cognitive, Emotional"
         string due_date
         string status "pending, done"
-        string completed_at
+        string completed_at "nullable"
+        string created_at
     }
+```
+
+### Tables planned for M5–M8 (not yet in schema.sql)
+
+```mermaid
+erDiagram
+    CHILD ||--o{ ENTRY : has
+    USER ||--o{ ENTRY : writes
+    CHILD ||--o{ DOCUMENT : has
+    USER ||--o{ DOCUMENT : uploads
+    CHILD ||--o{ SUMMARY : has
+    SUMMARY ||--o{ SUMMARY_SOURCE : "based on"
+    SUMMARY ||--o{ SUMMARY_FEEDBACK : receives
+    USER ||--o{ SUMMARY_FEEDBACK : gives
+
     ENTRY {
         int id PK
         int child_id FK
@@ -160,10 +181,13 @@ erDiagram
 
 **Notes:**
 - `UNIQUE(child_id, specialist_id)` on `SPECIALIST_LINK`. Unlinking deletes the row, so the next request from that specialist fails the link check immediately.
+- Deleting a child deletes its links, events and tasks (`ON DELETE CASCADE`).
+- The database itself rejects an unknown role, specialist type, development area or task status, and an event that ends before it starts (`CHECK` constraints). The API still validates input and returns `400`.
 - A child's login is a `USER` with role `child`, referenced by `CHILD.user_id` (assumption A2 in the SRS).
 - The week of a task is derived from `due_date` (Monday to Sunday, assumption A6).
 - Which records a reader may see is not stored; it follows from the role rules in Section 4.2.
-- The seed script creates synthetic parents, specialists, children, events, tasks and entries. No real data is used.
+- There are no migrations. `schema.sql` uses `CREATE TABLE IF NOT EXISTS`, so a changed schema reaches an existing `app.db` only through `npm run seed`, which drops and recreates all tables.
+- The seed script creates only synthetic data (all emails end in `@example.com`): a parent, a linked specialist (type teacher), an unlinked specialist, the child's account, one child record, two events and three tasks. Demo accounts and the shared demo password are listed in the README.
 
 ---
 
@@ -171,33 +195,37 @@ erDiagram
 
 ### 4.1 Interfaces
 
-All endpoints are under `/api`, use JSON (except file upload and download) and, apart from login, require a JWT in the `Authorization` header. Logout is handled on the client by discarding the token. `:id` is the child's id.
+All endpoints are under `/api`, use JSON (except file upload and download) and, apart from login and the health check, require a JWT in the `Authorization` header. The token carries the user id (`sub`) and the role and expires after `JWT_EXPIRES_IN` (default 1 hour). The client keeps the token and discards it on logout, so logout needs no endpoint. `:id` is the child's id.
 
-| Method | Endpoint | Description | Module |
-|---|---|---|---|
-| POST | `/api/auth/login` | Log in with email and password, receive a token | M1 |
-| GET | `/api/auth/me` | Current user and role | M1 |
-| GET | `/api/children` | Children visible to the user (own, linked, or own account) | M1, M2 |
-| GET | `/api/children/:id/specialists` | List linked specialists | M2 |
-| POST | `/api/children/:id/specialists` | Link a registered specialist by email and type | M2 |
-| DELETE | `/api/children/:id/specialists/:specialistId` | Unlink a specialist | M2 |
-| GET | `/api/children/:id/events?week=` | Events of a week | M3 |
-| POST | `/api/children/:id/events` | Add an event | M3 |
-| GET | `/api/children/:id/tasks?week=` | Tasks of a week (child: own tasks only) | M4 |
-| POST | `/api/children/:id/tasks` | Assign a task | M4 |
-| POST | `/api/children/:id/tasks/:taskId/complete` | Child marks a task as done | M4 |
-| GET | `/api/children/:id/entries` | List specialist entries | M5 |
-| POST | `/api/children/:id/entries` | Add an entry | M5 |
-| PUT | `/api/children/:id/entries/:entryId` | Edit an entry, sets "edited" | M5 |
-| GET | `/api/children/:id/documents` | List documents | M6 |
-| POST | `/api/children/:id/documents` | Upload a PDF or image (multipart) | M6 |
-| GET | `/api/children/:id/documents/:docId/download` | Download or view a document | M6 |
-| GET | `/api/children/:id/stats?week=` | Completion rate, total and by area | M7 |
-| POST | `/api/children/:id/summary?week=` | Generate an AI summary for the caller's role | M8 |
-| GET | `/api/children/:id/summary?week=` | Latest summary of the week for the caller's role | M8 |
-| POST | `/api/summaries/:summaryId/feedback` | Mark a summary "helpful" or "incorrect" | M8 |
+There is no registration endpoint: parent, specialist and child accounts are created by the seed script (SRS assumptions A1 and A2), and self-registration is out of scope.
 
-Error responses: `400` invalid data, `401` missing or expired token, `403` not allowed for this role or child, `404` unknown record, `502` AI provider failed (only for M8).
+| Method | Endpoint | Description | Module | Status |
+|---|---|---|---|---|
+| POST | `/api/auth/login` | Body `{ email, password }`. Returns `{ token, user }`; `400` if a field is missing, `401` for a wrong email or password | M1 | Implemented |
+| GET | `/api/auth/me` | Current user and role | M1 | Planned |
+| GET | `/api/health` | Health check (walking skeleton) | v0.0 | Implemented, temporary |
+| GET | `/api/sample-task` | First task from SQLite (walking skeleton); replaced by the M4 endpoints | v0.0 | Implemented, temporary |
+| GET | `/api/children` | Children visible to the user (own, linked, or own account) | M1, M2 | Planned |
+| GET | `/api/children/:id/specialists` | List linked specialists | M2 | Planned |
+| POST | `/api/children/:id/specialists` | Link a registered specialist by email and type | M2 | Planned |
+| DELETE | `/api/children/:id/specialists/:specialistId` | Unlink a specialist | M2 | Planned |
+| GET | `/api/children/:id/events?week=` | Events of a week | M3 | Planned |
+| POST | `/api/children/:id/events` | Add an event | M3 | Planned |
+| GET | `/api/children/:id/tasks?week=` | Tasks of a week (child: own tasks only) | M4 | Planned |
+| POST | `/api/children/:id/tasks` | Assign a task | M4 | Planned |
+| POST | `/api/children/:id/tasks/:taskId/complete` | Child marks a task as done | M4 | Planned |
+| GET | `/api/children/:id/entries` | List specialist entries | M5 | Planned |
+| POST | `/api/children/:id/entries` | Add an entry | M5 | Planned |
+| PUT | `/api/children/:id/entries/:entryId` | Edit an entry, sets "edited" | M5 | Planned |
+| GET | `/api/children/:id/documents` | List documents | M6 | Planned |
+| POST | `/api/children/:id/documents` | Upload a PDF or image (multipart) | M6 | Planned |
+| GET | `/api/children/:id/documents/:docId/download` | Download or view a document | M6 | Planned |
+| GET | `/api/children/:id/stats?week=` | Completion rate, total and by area | M7 | Planned |
+| POST | `/api/children/:id/summary?week=` | Generate an AI summary for the caller's role | M8 | Planned |
+| GET | `/api/children/:id/summary?week=` | Latest summary of the week for the caller's role | M8 | Planned |
+| POST | `/api/summaries/:summaryId/feedback` | Mark a summary "helpful" or "incorrect" | M8 | Planned |
+
+Error responses: `400` invalid data, `401` missing or expired token, `403` not allowed for this role or child, `404` unknown record, `502` AI provider failed (only for M8). Errors have the form `{ "error": "message" }`.
 
 ### 4.2 Access rules
 
@@ -219,16 +247,16 @@ Every request about a child passes three steps in the backend: `authenticate` (t
 
 ## 5. AI Module
 
-One backend module (`SummaryService` with `AiClient`) is the only place that calls the provider.
+One backend module (`summaryService` with `aiClient`) is the only place that calls the provider.
 
 ```mermaid
 flowchart LR
     Req["POST /summary?week="] --> Check["1. Check token and child access"]
     Check --> Select["2. Select the records of the week that this role may see"]
     Select --> Prompt["3. Build the role prompt (parent or specialist)"]
-    Prompt --> Provider{"AI_MODE"}
-    Provider -->|"mock (tests, CI)"| Mock["MockProvider: fixed sample answer"]
-    Provider -->|"live"| Live["Gemini API"]
+    Prompt --> Provider{"AI_PROVIDER"}
+    Provider -->|"mock (tests, CI)"| Mock["mockProvider: fixed sample answer"]
+    Provider -->|"gemini"| Live["geminiProvider: Gemini API"]
     Mock --> Save["4. Save summary + source record ids"]
     Live --> Save
     Save --> Resp["5. Return summary labelled AI-generated"]
@@ -239,7 +267,7 @@ Design decisions:
 - **Records first, prompt second.** The backend selects only allowed records (the week's tasks with status, and for parent and specialist the entries) and sends only those. A sentence in the prompt such as "do not show restricted data" is not access control.
 - **Two prompts.** The parent prompt asks for plain language. The specialist prompt asks for a compact professional overview. Both say: use only the given records; say if information is missing; do not diagnose or suggest treatment.
 - **Traceability.** The ids of the records sent are saved in `SUMMARY_SOURCE`, and the frontend shows them as links. The card carries the label "AI-generated" and the buttons "helpful" and "incorrect".
-- **Configuration.** `AI_MODE` (`mock` or `live`), `AI_PROVIDER`, `AI_API_KEY` are read from the environment. `.env` is in `.gitignore`; `.env.example` documents the names. Tests and CI always run with `AI_MODE=mock`.
+- **Configuration.** `AI_PROVIDER` (`mock` or `gemini`) selects the provider and `AI_API_KEY` is the Gemini key. Both are read from the environment. `.env` is in `.gitignore`; `server/.env.example` documents the names. Tests and CI always run with `AI_PROVIDER=mock`.
 - **Failure handling.** A timeout or provider error returns `502` with a clear message; the rest of the application keeps working.
 
 ---
@@ -252,12 +280,19 @@ Design decisions:
 sequenceDiagram
     actor Specialist
     actor Child
+    Note over Specialist,Child: Precondition: the parent has linked the specialist to the child (Flow 2)
+    Specialist->>Frontend: Log in
+    Frontend->>Backend: POST /api/auth/login
+    Backend-->>Frontend: Token (role specialist)
     Specialist->>Frontend: Fill in task form
     Frontend->>Backend: POST /api/children/:id/tasks (JWT)
     Backend->>Backend: Check token, role, specialist link, validate data
     Backend->>Database: Insert task (status pending)
     Database-->>Backend: Saved
     Backend-->>Frontend: 201 Created
+    Child->>Frontend: Log in
+    Frontend->>Backend: POST /api/auth/login
+    Backend-->>Frontend: Token (role child)
     Child->>Frontend: Open my tasks
     Frontend->>Backend: GET /api/children/:id/tasks
     Backend-->>Frontend: Own tasks only
@@ -287,6 +322,8 @@ sequenceDiagram
     Backend->>Database: Look up current link
     Database-->>Backend: No link
     Backend-->>Specialist: 403, no data
+    Specialist->>Backend: POST /api/children/:id/tasks (token still valid)
+    Backend-->>Specialist: 403, nothing saved
 ```
 
 ### Flow 3: Weekly statistics and AI summary
@@ -332,23 +369,25 @@ Test levels and targets: unit tests (Jest, Vitest) for calculations and prompt b
 
 ## 8. User Interface
 
-The interface follows the example screens of the assignment (Appendix A); the team may change the design. Screenshots are added to `docs/img/` when the screens are implemented.
+The interface follows the example screens of the assignment (Appendix A); the team may change the design. Each role has one home page under its own route. The route guard (`ProtectedRoute`) sends a user without a token to `/login` and a user with the wrong role to the home page of their own role (US-M1-02); the API enforces the same rules, so the guard is only a convenience. Screenshots are added to `docs/img/` when the screens are implemented.
 
-| Screen | Image | Module |
-|---|---|---|
-| Login | `docs/img/ui-login.png` (add at v0.1) | M1 |
-| Parent: weekly dashboard (schedule, tasks, statistics, AI summary) | `docs/img/ui-parent-dashboard.png` (add at v0.2) | M3, M4, M7, M8 |
-| Parent: linked specialists | `docs/img/ui-linked-specialists.png` (add at v0.1) | M2 |
-| Child: my tasks and upcoming events | `docs/img/ui-child-tasks.png` (add at v0.1) | M1, M3, M4 |
-| Specialist: child profile and new entry | `docs/img/ui-specialist-child.png` (add at v0.2) | M2, M5, M8 |
-| Specialist: assign and track tasks | `docs/img/ui-task-assign.png` (add at v0.1) | M4 |
-| Documents | `docs/img/ui-documents.png` (add at v0.2) | M6 |
+| Screen | Route | Image | Module |
+|---|---|---|---|
+| Login | `/login` | `docs/img/ui-login.png` (add at v0.1) | M1 |
+| Parent: weekly dashboard (schedule, tasks, statistics, AI summary) | `/parent` | `docs/img/ui-parent-dashboard.png` (add at v0.2) | M3, M4, M7, M8 |
+| Parent: linked specialists | `/parent` | `docs/img/ui-linked-specialists.png` (add at v0.1) | M2 |
+| Child: my tasks and upcoming events | `/child` | `docs/img/ui-child-tasks.png` (add at v0.1) | M1, M3, M4 |
+| Specialist: child profile and new entry | `/specialist` | `docs/img/ui-specialist-child.png` (add at v0.2) | M2, M5, M8 |
+| Specialist: assign and track tasks | `/specialist` | `docs/img/ui-task-assign.png` (add at v0.1) | M4 |
+| Documents | `/parent`, `/specialist` | `docs/img/ui-documents.png` (add at v0.2) | M6 |
 
 ---
 
 ## 9. Running and Configuration
 
-The application must install and run locally by following the README (a release that cannot be installed this way is not accepted). The README will list: install steps, running the seed script, starting backend and frontend, the standard test commands, and the environment variables (`JWT_SECRET`, `AI_MODE`, `AI_PROVIDER`, `AI_API_KEY`), with `.env.example` as a template. The current README is a placeholder and is completed with the walking skeleton (v0.0).
+The application must install and run locally by following the README (a release that cannot be installed this way is not accepted). The README lists the Node.js version, install steps for `server/` and `client/`, creating `server/.env` from `.env.example`, running `npm run seed`, starting backend and frontend in two terminals, the demo accounts and the test commands.
+
+Environment variables in `server/.env`: `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, and, from M8, `AI_PROVIDER` and `AI_API_KEY`. `.env.example` is the template and `.env` is never committed.
 
 ---
 
@@ -359,3 +398,4 @@ The application must install and run locally by following the README (a release 
 | 2026-10-22 | First version (child growth tracking concept, PostgreSQL) | Kardeşler Software |
 | 2026-10-25 | Rewritten to match the Term Project Assignment: SQLite, roles parent/specialist/child, modules M1–M8, access rules, AI module with mock mode | Kardeşler Software |
 | 2026-10-25 | Decided A7 (Gemini API) and A8 (English); removed the GitHub Models option | Kardeşler Software |
+| 2026-11-01 | Final: aligned with the walking skeleton code (repositories instead of models, Tailwind and ESLint in the stack, routes per module), data model now matches `schema.sql` with M5–M8 tables marked as planned, API status column, login flow added to Flow 1 and rejected task to Flow 2, `AI_MODE` replaced by `AI_PROVIDER` | Kardeşler Software |
