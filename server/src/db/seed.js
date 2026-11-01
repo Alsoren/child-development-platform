@@ -1,8 +1,11 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcrypt');
 const db = require('./index');
 
 const DEMO_PASSWORD = 'Password123';
+const schemaSql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 
 // Dates relative to today so the weekly view always has data
 const day = (offset, time = '10:00') => {
@@ -12,11 +15,11 @@ const day = (offset, time = '10:00') => {
 };
 
 const seed = db.transaction(() => {
-  // Reset (child tables first)
+  // Reset: drop and recreate, so an old app.db always gets the current schema
   ['tasks', 'events', 'specialist_links', 'children', 'users'].forEach((t) =>
-    db.prepare(`DELETE FROM ${t}`).run()
+    db.exec(`DROP TABLE IF EXISTS ${t}`)
   );
-  db.prepare('DELETE FROM sqlite_sequence').run();
+  db.exec(schemaSql);
 
   const hash = bcrypt.hashSync(DEMO_PASSWORD, 10);
   const insertUser = db.prepare(
@@ -48,7 +51,7 @@ const seed = db.transaction(() => {
   );
   insertTask.run(childId, teacherId, 'Read for 20 minutes', 'Read one chapter of a book.', 'Language', day(2, '18:00'), 'pending', null);
   insertTask.run(childId, teacherId, 'Practice counting to 50', null, 'Cognitive', day(0, '18:00'), 'done', day(0, '17:30'));
-  insertTask.run(childId, parentId, 'Tidy up your room', null, 'Self-care', day(1, '19:00'), 'pending', null);
+  insertTask.run(childId, parentId, 'Share a toy with a friend', 'Play together for 15 minutes.', 'Social', day(1, '19:00'), 'pending', null);
 });
 
 seed();
