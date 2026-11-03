@@ -9,4 +9,12 @@ const create = (req, res, next) => {
   }
 };
 
-module.exports = { create };
+const list = (req, res, next) => {
+  try {
+    res.json(eventService.listWeek(req.user, req.params.id, req.query.week));
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { create, list };
