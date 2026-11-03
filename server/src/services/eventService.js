@@ -5,6 +5,9 @@ const DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/;
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const UPCOMING_LIMIT = 20;
+
+const pad = (n) => String(n).padStart(2, '0');
 const toIsoDate = (date) => date.toISOString().slice(0, 10);
 
 // Accepts "YYYY-MM-DD HH:MM" or "YYYY-MM-DDTHH:MM" (datetime-local input).
@@ -37,8 +40,13 @@ function parseDate(value) {
 
 function today() {
   const now = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+// Local time as "YYYY-MM-DD HH:MM", the same format as events.start_at.
+function currentDateTime() {
+  const now = new Date();
+  return `${today()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
 // The Monday to Sunday week (SRS A6) that contains the given date, or null if the date is invalid.
@@ -54,15 +62,22 @@ function weekRange(value = today()) {
   };
 }
 
-// Parent of the child, or a specialist currently linked to the child (US-M3-01, US-M3-02).
+// The parent of the child and a specialist currently linked to the child. With allowChild,
+// also the child's own account (US-M3-01 to US-M3-03).
 // "No such child" and "not your child" give the same answer, so ids cannot be probed.
-function assertCanManageEvents(user, childId) {
+function hasAccess(user, childId, allowChild) {
+  if (!Number.isInteger(childId)) return false;
+  if (user.role === 'parent') return eventsRepository.isParentOf(user.id, childId);
+  if (user.role === 'specialist') return eventsRepository.isLinkedSpecialist(user.id, childId);
+  if (user.role === 'child') return allowChild && eventsRepository.isChildAccountOf(user.id, childId);
+  return false;
+}
+
+function assertCanAccessEvents(user, childId, { allowChild = false } = {}) {
   if (!user) throw new HttpError(401, 'Authentication required.');
-  const allowed =
-    Number.isInteger(childId) &&
-    ((user.role === 'parent' && eventsRepository.isParentOf(user.id, childId)) ||
-      (user.role === 'specialist' && eventsRepository.isLinkedSpecialist(user.id, childId)));
-  if (!allowed) throw new HttpError(403, "You are not allowed to access this child's events.");
+  if (!hasAccess(user, childId, allowChild)) {
+    throw new HttpError(403, "You are not allowed to access this child's events.");
+  }
 }
 
 const toEvent = (row) => ({
@@ -76,7 +91,7 @@ const toEvent = (row) => ({
 
 function createEvent(user, childIdParam, body) {
   const childId = Number(childIdParam);
-  assertCanManageEvents(user, childId);
+  assertCanAccessEvents(user, childId);
 
   const { title, startAt, endAt } = body || {};
   const cleanTitle = typeof title === 'string' ? title.trim() : '';
@@ -95,7 +110,7 @@ function createEvent(user, childIdParam, body) {
 // Events of the week that contains `week` (any date in it, default: this week), ordered by date and time.
 function listWeek(user, childIdParam, week) {
   const childId = Number(childIdParam);
-  assertCanManageEvents(user, childId);
+  assertCanAccessEvents(user, childId);
 
   const range = weekRange(week);
   if (!range) throw new HttpError(400, 'Week must be a date (YYYY-MM-DD).');
@@ -104,4 +119,12 @@ function listWeek(user, childIdParam, week) {
   return { weekStart: range.weekStart, weekEnd: range.weekEnd, events: rows.map(toEvent) };
 }
 
-module.exports = { createEvent, listWeek };
+// Events that have not ended yet, soonest first, at most UPCOMING_LIMIT. Also open to the child's own account (US-M3-03).
+function listUpcoming(user, childIdParam, now = currentDateTime()) {
+  const childId = Number(childIdParam);
+  assertCanAccessEvents(user, childId, { allowChild: true });
+
+  return { events: eventsRepository.findUpcoming(childId, now, UPCOMING_LIMIT).map(toEvent) };
+}
+
+module.exports = { createEvent, listWeek, listUpcoming };

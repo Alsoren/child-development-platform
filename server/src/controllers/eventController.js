@@ -17,4 +17,12 @@ const list = (req, res, next) => {
   }
 };
 
-module.exports = { create, list };
+const upcoming = (req, res, next) => {
+  try {
+    res.json(eventService.listUpcoming(req.user, req.params.id));
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { create, list, upcoming };
