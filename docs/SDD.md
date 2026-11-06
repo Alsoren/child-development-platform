@@ -210,6 +210,7 @@ There is no registration endpoint: parent, specialist and child accounts are cre
 | POST | `/api/children/:id/specialists` | Link a registered specialist by email and type | M2 | Planned |
 | DELETE | `/api/children/:id/specialists/:specialistId` | Unlink a specialist | M2 | Planned |
 | GET | `/api/children/:id/events?week=` | Events of a week | M3 | Planned |
+| GET | `/api/children/:id/events/upcoming` | Events that have not ended yet, soonest first, at most 20; also open to the child's own account | M3 | Planned |
 | POST | `/api/children/:id/events` | Add an event | M3 | Planned |
 | GET | `/api/children/:id/tasks?week=` | Tasks of a week (child: own tasks only) | M4 | Planned |
 | POST | `/api/children/:id/tasks` | Assign a task | M4 | Planned |
