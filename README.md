@@ -31,6 +31,8 @@ cd ../client
 npm install
 ```
 
+After pulling a change to `server/src/db/schema.sql`, run `npm run seed` again so your local database gets the new schema.
+
 ## Running
 
 Open two terminals:
@@ -69,6 +71,9 @@ http://localhost:5173/skeleton shows a sample task read from SQLite through the 
 ```bash
 cd server
 npm test        # Jest + Supertest, with coverage report
+
+cd ../client
+npm test        # Vitest
 ```
 
 ## Environment variables (`server/.env`)
@@ -78,5 +83,7 @@ npm test        # Jest + Supertest, with coverage report
 | `PORT` | Backend port (default `3000`) |
 | `JWT_SECRET` | Secret used to sign login tokens |
 | `JWT_EXPIRES_IN` | Token lifetime, e.g. `1h` |
+| `AI_PROVIDER` | AI summary provider: `mock` (fixed sample answer, used in tests and CI) or `gemini` |
+| `AI_API_KEY` | Gemini API key, only needed when `AI_PROVIDER=gemini` |
 
 `.env` is never committed; use `.env.example` as a template.

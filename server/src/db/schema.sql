@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS specialist_links (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   child_id INTEGER NOT NULL REFERENCES children(id) ON DELETE CASCADE,
   specialist_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  specialist_type TEXT NOT NULL,
+  specialist_type TEXT NOT NULL CHECK (specialist_type IN
+    ('teacher', 'psychologist', 'doctor', 'special education teacher', 'coach')),
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE (child_id, specialist_id)
 );
@@ -31,7 +32,8 @@ CREATE TABLE IF NOT EXISTS events (
   title TEXT NOT NULL,
   start_at TEXT NOT NULL,
   end_at TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (end_at IS NULL OR end_at > start_at)
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
@@ -40,7 +42,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   assigned_by INTEGER NOT NULL REFERENCES users(id),
   title TEXT NOT NULL,
   description TEXT,
-  development_area TEXT NOT NULL,
+  development_area TEXT NOT NULL CHECK (development_area IN
+    ('Language', 'Motor', 'Social', 'Cognitive', 'Emotional')),
   due_date TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'done')),
   completed_at TEXT,

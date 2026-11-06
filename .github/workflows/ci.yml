@@ -9,7 +9,6 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     env:
-      NODE_ENV: test
       JWT_SECRET: ci-test-secret
       JWT_EXPIRES_IN: 1h
       AI_PROVIDER: mock
@@ -33,11 +32,17 @@ jobs:
 
       - name: Server – tests with coverage
         working-directory: server
+        env:
+          NODE_ENV: test
         run: npm test
 
       - name: Client – install
         working-directory: client
         run: npm ci
+
+      - name: Client – tests
+        working-directory: client
+        run: npm test
 
       - name: Client – build
         working-directory: client
