@@ -8,4 +8,8 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { login };
+const me = (req, res) => {
+  res.json(authService.getMe(req.user.id));
+};
+
+module.exports = { login, me };

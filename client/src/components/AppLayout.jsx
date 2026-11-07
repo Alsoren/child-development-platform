@@ -8,7 +8,7 @@ export default function AppLayout({ title, children }) {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   return (

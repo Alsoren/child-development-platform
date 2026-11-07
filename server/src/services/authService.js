@@ -16,4 +16,10 @@ async function login({ email, password }) {
   return { token, user: { id: user.id, email: user.email, role: user.role, name: user.name } };
 }
 
-module.exports = { login };
+function getMe(userId) {
+  const user = usersRepository.findById(userId);
+  if (!user) throw new HttpError(401, 'User no longer exists.');
+  return { user };
+}
+
+module.exports = { login, getMe };
