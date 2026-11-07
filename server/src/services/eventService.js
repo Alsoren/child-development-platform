@@ -1,8 +1,8 @@
 const eventsRepository = require('../repositories/eventsRepository');
 const HttpError = require('../utils/httpError');
+const { parseDate } = require('../utils/dates');
 
 const DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/;
-const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const UPCOMING_LIMIT = 20;
@@ -25,17 +25,6 @@ function normalizeDateTime(value) {
     date.getUTCHours() === h &&
     date.getUTCMinutes() === mi;
   return isReal ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}` : null;
-}
-
-// Returns a UTC Date for "YYYY-MM-DD", or null if it is not a real date.
-function parseDate(value) {
-  if (typeof value !== 'string') return null;
-  const m = DATE_ONLY.exec(value);
-  if (!m) return null;
-  const [y, mo, d] = m.slice(1).map(Number);
-  const date = new Date(Date.UTC(y, mo - 1, d));
-  const isReal = date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d;
-  return isReal ? date : null;
 }
 
 function today() {
