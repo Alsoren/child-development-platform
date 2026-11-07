@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 const skeletonRoutes = require('./routes/skeletonRoutes');
 
 
@@ -13,6 +14,7 @@ app.use('/api/auth', authRoutes);
 // Needs req.user ({ id, role }) from the authenticate middleware (SCRUM-41).
 // Until that exists, every request gets 401, so the route is closed by default.
 app.use('/api/children', eventRoutes);
+app.use('/api/children', taskRoutes);
 
 app.use((err, req, res, next) => {
   const status = err.status || 500;
