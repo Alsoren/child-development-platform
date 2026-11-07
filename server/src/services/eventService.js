@@ -1,14 +1,10 @@
 const eventsRepository = require('../repositories/eventsRepository');
 const HttpError = require('../utils/httpError');
-const { parseDate } = require('../utils/dates');
+const { today, weekRange, pad } = require('../utils/dates');
 
 const DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const UPCOMING_LIMIT = 20;
-
-const pad = (n) => String(n).padStart(2, '0');
-const toIsoDate = (date) => date.toISOString().slice(0, 10);
 
 // Accepts "YYYY-MM-DD HH:MM" or "YYYY-MM-DDTHH:MM" (datetime-local input).
 // Returns "YYYY-MM-DD HH:MM", or null if it is not a real date and time.
@@ -27,28 +23,10 @@ function normalizeDateTime(value) {
   return isReal ? `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}` : null;
 }
 
-function today() {
-  const now = new Date();
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-}
-
 // Local time as "YYYY-MM-DD HH:MM", the same format as events.start_at.
 function currentDateTime() {
   const now = new Date();
   return `${today()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-}
-
-// The Monday to Sunday week (SRS A6) that contains the given date, or null if the date is invalid.
-function weekRange(value = today()) {
-  const date = parseDate(value);
-  if (!date) return null;
-  const sinceMonday = (date.getUTCDay() + 6) % 7;
-  const monday = new Date(date.getTime() - sinceMonday * DAY_MS);
-  return {
-    weekStart: toIsoDate(monday),
-    weekEnd: toIsoDate(new Date(monday.getTime() + 6 * DAY_MS)),
-    nextWeekStart: toIsoDate(new Date(monday.getTime() + 7 * DAY_MS)),
-  };
 }
 
 // The parent of the child and a specialist currently linked to the child. With allowChild,
