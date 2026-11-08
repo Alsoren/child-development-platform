@@ -26,4 +26,10 @@ function linkSpecialist(childId, body) {
   return linksRepository.insert({ childId, specialistId: specialist.id, type });
 }
 
-module.exports = { linkSpecialist, SPECIALIST_TYPES };
+// US-M2-02: the specialists linked to the child, with name, email and type.
+const listSpecialists = (childId) => ({ specialists: linksRepository.findByChild(childId) });
+
+// GET /api/children: the children the logged-in user may open (any role).
+const listChildren = (user) => ({ children: linksRepository.findChildrenForUser(user.id, user.role) });
+
+module.exports = { linkSpecialist, listSpecialists, listChildren, SPECIALIST_TYPES };

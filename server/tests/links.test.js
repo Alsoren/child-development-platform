@@ -103,3 +103,58 @@ describe('POST /api/children/:id/specialists access control', () => {
     expect(linkCount(otherChildId)).toBe(0);
   });
 });
+
+describe('GET /api/children/:id/specialists (US-M2-02)', () => {
+  const list = (childIdParam, auth = bearer(parentId, 'parent')) =>
+    request(app).get(`/api/children/${childIdParam}/specialists`).set('Authorization', auth);
+
+  test('lists each linked specialist with name, email and type', async () => {
+    const res = await list(childId);
+    expect(res.status).toBe(200);
+    expect(res.body.specialists).toEqual([
+      expect.objectContaining({ specialistId, name: 'link-teacher@example.com', email: 'link-teacher@example.com', type: 'teacher' }),
+      expect.objectContaining({ email: 'link-specialist-2@example.com', type: 'coach' }),
+    ]);
+  });
+
+  test('returns an empty list for a child with no links', async () => {
+    const res = await list(otherChildId, bearer(otherParentId, 'parent'));
+    expect(res.status).toBe(200);
+    expect(res.body.specialists).toEqual([]);
+  });
+
+  test.each([
+    ['a linked specialist', () => bearer(specialistId, 'specialist')],
+    ['the child', () => bearer(childUserId, 'child')],
+    ['the parent of another child', () => bearer(otherParentId, 'parent')],
+  ])('rejects %s with 403', async (_, auth) => {
+    const res = await list(childId, auth());
+    expect(res.status).toBe(403);
+    expect(res.body.specialists).toBeUndefined();
+  });
+});
+
+describe('GET /api/children', () => {
+  const children = (auth) => request(app).get('/api/children').set('Authorization', auth);
+
+  test('a parent sees only their own children', async () => {
+    const res = await children(bearer(parentId, 'parent'));
+    expect(res.status).toBe(200);
+    expect(res.body.children).toEqual([{ id: childId, name: 'Link Child' }]);
+  });
+
+  test('a specialist sees only linked children', async () => {
+    const res = await children(bearer(specialistId, 'specialist'));
+    expect(res.body.children).toEqual([{ id: childId, name: 'Link Child' }]);
+  });
+
+  test('a child sees only their own record', async () => {
+    const res = await children(bearer(childUserId, 'child'));
+    expect(res.body.children).toEqual([{ id: childId, name: 'Link Child' }]);
+  });
+
+  test('rejects a request without a token with 401', async () => {
+    const res = await request(app).get('/api/children');
+    expect(res.status).toBe(401);
+  });
+});
