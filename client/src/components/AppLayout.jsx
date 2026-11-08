@@ -27,11 +27,11 @@ export default function AppLayout({ title, children }) {
   );
 }
 
-export function Section({ title }) {
+export function Section({ title, children }) {
   return (
     <section className="rounded-xl bg-white p-5 shadow-sm">
       <h2 className="font-semibold">{title}</h2>
-      <p className="mt-2 text-sm text-slate-500">Coming soon.</p>
+      {children ?? <p className="mt-2 text-sm text-slate-500">Coming soon.</p>}
     </section>
   );
 }
