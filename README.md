@@ -75,6 +75,11 @@ npm test        # Jest + Supertest, with coverage report
 cd ../client
 npm test        # Vitest
 ```
+### End-to-End (E2E) Tests
+
+```bash
+cd e2e && npm install && npx playwright install chromium && npm test
+```
 
 ## Environment variables (`server/.env`)
 
