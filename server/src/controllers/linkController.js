@@ -9,4 +9,20 @@ const create = (req, res, next) => {
   }
 };
 
-module.exports = { create };
+const list = (req, res, next) => {
+  try {
+    res.json(linkService.listSpecialists(req.childId));
+  } catch (err) {
+    next(err);
+  }
+};
+
+const listChildren = (req, res, next) => {
+  try {
+    res.json(linkService.listChildren(req.user));
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { create, list, listChildren };
