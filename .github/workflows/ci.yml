@@ -47,3 +47,15 @@ jobs:
       - name: Client – build
         working-directory: client
         run: npm run build
+
+      - name: E2E install dependencies
+        working-directory: e2e
+        run: npm ci
+
+      - name: E2E install Playwright Chromium
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests
+        working-directory: e2e
+        run: npm test
