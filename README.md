@@ -88,7 +88,8 @@ cd e2e && npm install && npx playwright install chromium && npm test
 | `PORT` | Backend port (default `3000`) |
 | `JWT_SECRET` | Secret used to sign login tokens |
 | `JWT_EXPIRES_IN` | Token lifetime, e.g. `1h` |
-| `AI_PROVIDER` | AI summary provider: `mock` (fixed sample answer, used in tests and CI) or `gemini` |
-| `AI_API_KEY` | Gemini API key, only needed when `AI_PROVIDER=gemini` |
+| `AI_PROVIDER` | AI summary provider: `mock` (fixed sample answer, used in tests and CI; also the default when unset) or `gemini` |
+| `AI_API_KEY` | Gemini API key, only needed when `AI_PROVIDER=gemini`. Read only by the backend |
+| `AI_MODEL` | Gemini model name, optional (default `gemini-3.7-flash`) |
 
 `.env` is never committed; use `.env.example` as a template.
