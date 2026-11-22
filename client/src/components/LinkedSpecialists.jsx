@@ -1,7 +1,7 @@
-    import { useEffect, useState } from 'react';
-import { SPECIALIST_TYPES, getLinkedSpecialists, linkSpecialist } from '../api/links';
+import { useEffect, useState } from 'react';
+import { SPECIALIST_TYPES, getLinkedSpecialists, linkSpecialist, unlinkSpecialist } from '../api/links';
 
-// US-M2-01 and US-M2-02: the parent links a specialist by email and type and sees the linked specialists.
+// US-M2-01, US-M2-02 and US-M2-03: the parent links, lists and unlinks specialists.
 export default function LinkedSpecialists({ childId }) {
   const [specialists, setSpecialists] = useState([]);
   const [loadError, setLoadError] = useState('');
@@ -9,6 +9,7 @@ export default function LinkedSpecialists({ childId }) {
   const [type, setType] = useState(SPECIALIST_TYPES[0]);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [unlinkError, setUnlinkError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -33,6 +34,17 @@ export default function LinkedSpecialists({ childId }) {
     }
   };
 
+  const handleUnlink = async (s) => {
+    if (!window.confirm(`Unlink ${s.name}? They will no longer see this child's data.`)) return;
+    setUnlinkError('');
+    try {
+      await unlinkSpecialist(childId, s.specialistId);
+      setSpecialists((list) => list.filter((x) => x.specialistId !== s.specialistId));
+    } catch (err) {
+      setUnlinkError(err.message);
+    }
+  };
+
   return (
     <div className="mt-3 flex flex-col gap-4">
       {loadError && <p role="alert" className="text-sm text-red-600">{loadError}</p>}
@@ -41,12 +53,21 @@ export default function LinkedSpecialists({ childId }) {
         <p className="text-sm text-slate-500">No specialists linked yet.</p>
       )}
 
+      {unlinkError && <p role="alert" className="text-sm text-red-600">{unlinkError}</p>}
+
       {specialists.length > 0 && (
         <ul className="divide-y divide-slate-200 text-sm">
           {specialists.map((s) => (
-            <li key={s.specialistId} className="py-2">
-              <p className="font-medium">{s.name}</p>
-              <p className="text-slate-500">{s.email} · {s.type}</p>
+            <li key={s.specialistId} className="py-2 flex items-center justify-between gap-2">
+              <div>
+                <p className="font-medium">{s.name}</p>
+                <p className="text-slate-500">{s.email} · {s.type}</p>
+              </div>
+              <button type="button" onClick={() => handleUnlink(s)}
+                aria-label={`Unlink ${s.name}`}
+                className="px-2 py-1 rounded-md border border-red-300 text-red-700 hover:bg-red-50">
+                Unlink
+              </button>
             </li>
           ))}
         </ul>

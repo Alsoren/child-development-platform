@@ -3,12 +3,13 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import LinkedSpecialists from '../src/components/LinkedSpecialists';
-import { getLinkedSpecialists, linkSpecialist } from '../src/api/links';
+import { getLinkedSpecialists, linkSpecialist, unlinkSpecialist } from '../src/api/links';
 
 vi.mock('../src/api/links', async (importOriginal) => ({
   ...(await importOriginal()),
   getLinkedSpecialists: vi.fn(),
   linkSpecialist: vi.fn(),
+  unlinkSpecialist: vi.fn(),
 }));
 
 const teacher = { specialistId: 2, name: 'Demo Teacher', email: 'teacher@example.com', type: 'teacher' };
@@ -17,6 +18,7 @@ describe('LinkedSpecialists', () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('lists each linked specialist with name, email and type (US-M2-02)', async () => {
@@ -67,4 +69,40 @@ describe('LinkedSpecialists', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('No registered specialist with this email.');
     expect(screen.getByText('No specialists linked yet.')).toBeInTheDocument();
   });
+
+  it('unlinks a specialist after confirmation and removes it from the list (US-M2-03)', async () => {
+    getLinkedSpecialists.mockResolvedValue({ specialists: [teacher] });
+    unlinkSpecialist.mockResolvedValue({});
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<LinkedSpecialists childId={1} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Unlink Demo Teacher' }));
+
+    expect(await screen.findByText('No specialists linked yet.')).toBeInTheDocument();
+    expect(unlinkSpecialist).toHaveBeenCalledWith(1, 2);
+  });
+
+  it('keeps the specialist when the parent cancels the confirmation (US-M2-03)', async () => {
+    getLinkedSpecialists.mockResolvedValue({ specialists: [teacher] });
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<LinkedSpecialists childId={1} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Unlink Demo Teacher' }));
+
+    expect(unlinkSpecialist).not.toHaveBeenCalled();
+    expect(screen.getByText('Demo Teacher')).toBeInTheDocument();
+  });
+
+  it('shows the API error when unlinking fails and keeps the specialist (US-M2-03)', async () => {
+    getLinkedSpecialists.mockResolvedValue({ specialists: [teacher] });
+    unlinkSpecialist.mockRejectedValue(new Error('You are not allowed to access this child.'));
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<LinkedSpecialists childId={1} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Unlink Demo Teacher' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('You are not allowed to access this child.');
+    expect(screen.getByText('Demo Teacher')).toBeInTheDocument();
+  });
+
 });
