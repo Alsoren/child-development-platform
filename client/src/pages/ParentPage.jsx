@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import AppLayout, { Section } from '../components/AppLayout';
 import LinkedSpecialists from '../components/LinkedSpecialists';
+import TaskBoard from '../components/TaskBoard';
+import WeeklySchedule from '../components/WeeklySchedule';
 import { getChildren } from '../api/links';
 
 export default function ParentPage() {
@@ -31,8 +33,12 @@ export default function ParentPage() {
         </label>
       )}
 
-      <Section title="Weekly schedule" />
-      <Section title="Tasks" />
+      <Section title="Weekly schedule">
+        {childId && <WeeklySchedule key={childId} childId={childId} />}
+      </Section>
+      <Section title="Tasks">
+        {childId && <TaskBoard key={childId} childId={childId} />}
+      </Section>
       <Section title="Linked specialists">
         {childId && <LinkedSpecialists key={childId} childId={childId} />}
       </Section>
