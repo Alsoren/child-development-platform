@@ -8,5 +8,6 @@ const router = express.Router();
 router.get('/', linkController.listChildren);
 router.get('/:id/specialists', requireRole('parent'), requireChildAccess(), linkController.list);
 router.post('/:id/specialists', requireRole('parent'), requireChildAccess(), linkController.create);
+router.delete('/:id/specialists/:specialistId', requireRole('parent'), requireChildAccess(), linkController.remove);
 
 module.exports = router;

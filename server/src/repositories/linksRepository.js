@@ -56,6 +56,11 @@ const insert = ({ childId, specialistId, type }) => {
   return findLink(childId, specialistId);
 };
 
+// Deleting the row ends the specialist's access at once: every child request re-checks the link.
+const remove = (childId, specialistId) =>
+  db.prepare('DELETE FROM specialist_links WHERE child_id = ? AND specialist_id = ?').run(childId, specialistId).changes > 0;
+
 module.exports = {
   isParentOf, isLinkedSpecialist, isChildAccountOf, findSpecialistByEmail, findLink, findByChild, findChildrenForUser, insert,
+  remove,
 };

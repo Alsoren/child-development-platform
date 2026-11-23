@@ -8,3 +8,6 @@ export const getLinkedSpecialists = (childId) => apiFetch(`/children/${childId}/
 
 export const linkSpecialist = (childId, email, type) =>
   apiFetch(`/children/${childId}/specialists`, { method: 'POST', body: { email, type } });
+
+export const unlinkSpecialist = (childId, specialistId) =>
+  apiFetch(`/children/${childId}/specialists/${specialistId}`, { method: 'DELETE' });
