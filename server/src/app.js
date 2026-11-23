@@ -4,6 +4,7 @@ const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const linkRoutes = require('./routes/linkRoutes');
+const summaryRoutes = require('./routes/summaryRoutes');
 const skeletonRoutes = require('./routes/skeletonRoutes');
 const { authenticate } = require('./middleware/auth');
 
@@ -12,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
-app.use('/api/children', authenticate, eventRoutes, taskRoutes, linkRoutes);
+app.use('/api/children', authenticate, eventRoutes, taskRoutes, linkRoutes, summaryRoutes);
 app.use('/api', skeletonRoutes);
 
 app.use((err, req, res, next) => {
