@@ -226,3 +226,25 @@ describe('DELETE /api/children/:id/specialists/:specialistId (US-M2-03)', () => 
     expect(linkCount(kidId)).toBe(1);
   });
 });
+  test('a specialist linked to two children sees exactly those two and no others (US-M2-04)', async () => {
+    const parent = addUser('m204-parent@example.com', 'parent');
+    const spec = addUser('m204-teacher@example.com', 'specialist');
+    const first = addChild(parent, null, 'M204 Alpha');
+    const second = addChild(parent, null, 'M204 Beta');
+    addChild(parent, null, 'M204 Not Linked');
+    const linkTo = (id) => db.prepare('INSERT INTO specialist_links (child_id, specialist_id, specialist_type) VALUES (?, ?, ?)')
+      .run(id, spec, 'teacher');
+    linkTo(first);
+    linkTo(second);
+
+    const res = await request(app).get('/api/children').set('Authorization', bearer(spec, 'specialist'));
+    expect(res.status).toBe(200);
+    expect(res.body.children).toEqual([{ id: first, name: 'M204 Alpha' }, { id: second, name: 'M204 Beta' }]);
+  });
+
+  test('a specialist with no links sees an empty list (US-M2-04)', async () => {
+    const spec = addUser('m204-nolinks@example.com', 'specialist');
+    const res = await request(app).get('/api/children').set('Authorization', bearer(spec, 'specialist'));
+    expect(res.status).toBe(200);
+    expect(res.body.children).toEqual([]);
+  });
