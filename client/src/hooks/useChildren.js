@@ -7,6 +7,7 @@ export function useChildren() {
   const [children, setChildren] = useState([]);
   const [childId, setChildId] = useState(null);
   const [error, setError] = useState('');
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     getChildren()
@@ -14,8 +15,9 @@ export function useChildren() {
         setChildren(data.children);
         if (data.children.length > 0) setChildId(data.children[0].id);
       })
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message))
+      .finally(() => setLoaded(true));
   }, []);
 
-  return { children, childId, setChildId, error };
+  return { children, childId, setChildId, error, loaded };
 }
