@@ -248,3 +248,45 @@ describe('DELETE /api/children/:id/specialists/:specialistId (US-M2-03)', () => 
     expect(res.status).toBe(200);
     expect(res.body.children).toEqual([]);
   });
+
+// US-M2-05: links of a child can be managed only by that child's own parent.
+describe('Only the owning parent manages links (US-M2-05)', () => {
+  let ownerId, otherParentId2, specId, kidId;
+
+  beforeAll(() => {
+    ownerId = addUser('m205-owner@example.com', 'parent');
+    otherParentId2 = addUser('m205-other-parent@example.com', 'parent');
+    specId = addUser('m205-teacher@example.com', 'specialist');
+    addUser('m205-coach@example.com', 'specialist');
+    kidId = addChild(ownerId, null, 'M205 Child');
+    db.prepare('INSERT INTO specialist_links (child_id, specialist_id, specialist_type) VALUES (?, ?, ?)')
+      .run(kidId, specId, 'teacher');
+  });
+
+  const asOther = () => bearer(otherParentId2, 'parent');
+
+  test('another parent cannot link a specialist to the child', async () => {
+    const res = await request(app).post(`/api/children/${kidId}/specialists`).set('Authorization', asOther())
+      .send({ email: 'm205-coach@example.com', type: 'coach' });
+    expect(res.status).toBe(403);
+    expect(linkCount(kidId)).toBe(1);
+  });
+
+  test('another parent cannot unlink a specialist from the child', async () => {
+    const res = await request(app).delete(`/api/children/${kidId}/specialists/${specId}`).set('Authorization', asOther());
+    expect(res.status).toBe(403);
+    expect(linkCount(kidId)).toBe(1);
+  });
+
+  test('another parent cannot see the child\'s linked specialists', async () => {
+    const res = await request(app).get(`/api/children/${kidId}/specialists`).set('Authorization', asOther());
+    expect(res.status).toBe(403);
+    expect(res.body.specialists).toBeUndefined();
+  });
+
+  test('the owning parent can still manage the links', async () => {
+    const res = await request(app).get(`/api/children/${kidId}/specialists`).set('Authorization', bearer(ownerId, 'parent'));
+    expect(res.status).toBe(200);
+    expect(res.body.specialists.map((s) => s.specialistId)).toEqual([specId]);
+  });
+});
