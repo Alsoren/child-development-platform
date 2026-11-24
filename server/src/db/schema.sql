@@ -49,3 +49,21 @@ CREATE TABLE IF NOT EXISTS tasks (
   completed_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS summaries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  child_id INTEGER NOT NULL REFERENCES children(id) ON DELETE CASCADE,
+  requested_by INTEGER NOT NULL REFERENCES users(id),
+  reader_role TEXT NOT NULL CHECK (reader_role IN ('parent', 'specialist')),
+  week_start TEXT NOT NULL,
+  text TEXT NOT NULL,
+  provider TEXT NOT NULL CHECK (provider IN ('gemini', 'mock')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS summary_sources (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  summary_id INTEGER NOT NULL REFERENCES summaries(id) ON DELETE CASCADE,
+  source_type TEXT NOT NULL CHECK (source_type IN ('task', 'entry')),
+  source_id INTEGER NOT NULL
+);
