@@ -67,3 +67,12 @@ CREATE TABLE IF NOT EXISTS summary_sources (
   source_type TEXT NOT NULL CHECK (source_type IN ('task', 'entry')),
   source_id INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS summary_feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  summary_id INTEGER NOT NULL REFERENCES summaries(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  rating TEXT NOT NULL CHECK (rating IN ('helpful', 'incorrect')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (summary_id, user_id)
+);

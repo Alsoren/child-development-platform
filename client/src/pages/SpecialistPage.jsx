@@ -1,4 +1,5 @@
 import AppLayout, { Section } from '../components/AppLayout';
+import SummaryCard from '../components/SummaryCard';
 import TaskBoard from '../components/TaskBoard';
 import WeeklySchedule from '../components/WeeklySchedule';
 import { useChildren } from '../hooks/useChildren';
@@ -28,6 +29,9 @@ export default function SpecialistPage() {
         {childId && <TaskBoard key={childId} childId={childId} />}
       </Section>
       <Section title="Entries" />
+      <Section title="AI summary">
+        {childId && <SummaryCard key={childId} childId={childId} />}
+      </Section>
       <Section title="Documents" />
     </AppLayout>
   );

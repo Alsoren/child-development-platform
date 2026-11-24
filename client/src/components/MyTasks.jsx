@@ -27,7 +27,7 @@ export default function MyTasks({ childId }) {
       {data && data.tasks.length > 0 && (
         <ul className="divide-y divide-slate-200 text-sm">
           {data.tasks.map((task) => (
-            <li key={task.id} className="flex items-start justify-between gap-3 py-2">
+            <li key={task.id} id={`task-${task.id}`} className="flex items-start justify-between gap-3 py-2">
               <div>
                 <p className="font-medium">{task.title}</p>
                 {task.description && <p className="text-slate-600">{task.description}</p>}

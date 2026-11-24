@@ -4,8 +4,17 @@ const findChildName = (childId) => db.prepare('SELECT name FROM children WHERE i
 
 const findById = (id) => db.prepare('SELECT * FROM summaries WHERE id = ?').get(id);
 
+// The records a summary is based on. Tasks come with their title and due date so the screen can
+// show readable links; the join is a LEFT JOIN so a source never disappears if its record is gone.
 const findSources = (summaryId) =>
-  db.prepare('SELECT source_type, source_id FROM summary_sources WHERE summary_id = ? ORDER BY id').all(summaryId);
+  db
+    .prepare(
+      `SELECT s.source_type, s.source_id, t.title, t.due_date
+       FROM summary_sources s
+       LEFT JOIN tasks t ON s.source_type = 'task' AND t.id = s.source_id
+       WHERE s.summary_id = ? ORDER BY s.id`
+    )
+    .all(summaryId);
 
 // The newest summary of a week that was written for one reader role.
 const findLatest = (childId, weekStart, readerRole) =>

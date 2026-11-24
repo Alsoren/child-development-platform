@@ -1,4 +1,5 @@
 const summariesRepository = require('../repositories/summariesRepository');
+const feedbackRepository = require('../repositories/feedbackRepository');
 const tasksRepository = require('../repositories/tasksRepository');
 const aiClient = require('../ai/aiClient');
 const { buildPrompt } = require('../ai/prompts');
@@ -15,7 +16,8 @@ const toPromptTask = (row) => ({
   status: row.status,
 });
 
-const toSummary = (row) => ({
+// `userId` is the caller: myFeedback is their own vote on this summary (or null).
+const toSummary = (row, userId) => ({
   id: row.id,
   childId: row.child_id,
   readerRole: row.reader_role,
@@ -24,7 +26,13 @@ const toSummary = (row) => ({
   text: row.text,
   provider: row.provider,
   createdAt: row.created_at,
-  sources: summariesRepository.findSources(row.id).map((s) => ({ type: s.source_type, id: s.source_id })),
+  sources: summariesRepository.findSources(row.id).map((s) => ({
+    type: s.source_type,
+    id: s.source_id,
+    title: s.title,
+    dueDate: s.due_date,
+  })),
+  myFeedback: feedbackRepository.findRating(row.id, userId),
 });
 
 // US-M8-01 and US-M8-02: a summary of the week for the reader's role. The route has already checked
@@ -56,16 +64,17 @@ async function createSummary(user, childId, week) {
     provider,
     sources: prompt.sources,
   });
-  return toSummary(summariesRepository.findById(id));
+  return toSummary(summariesRepository.findById(id), user.id);
 }
 
-// The latest summary of the week that was written for the caller's role, or null.
+// The latest summary of the week that was written for the caller's role (or null), with the week
+// itself, so the screen can show the week even when there is no summary yet.
 function getLatest(user, childId, week) {
   const range = weekRange(week);
   if (!range) throw invalidWeek();
 
   const row = summariesRepository.findLatest(childId, range.weekStart, user.role);
-  return row ? toSummary(row) : null;
+  return { weekStart: range.weekStart, weekEnd: range.weekEnd, summary: row ? toSummary(row, user.id) : null };
 }
 
 module.exports = { createSummary, getLatest };
