@@ -5,6 +5,7 @@ const eventRoutes = require('./routes/eventRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const linkRoutes = require('./routes/linkRoutes');
 const summaryRoutes = require('./routes/summaryRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
 const skeletonRoutes = require('./routes/skeletonRoutes');
 const { authenticate } = require('./middleware/auth');
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/children', authenticate, eventRoutes, taskRoutes, linkRoutes, summaryRoutes);
+app.use('/api/summaries', authenticate, feedbackRoutes);
 app.use('/api', skeletonRoutes);
 
 app.use((err, req, res, next) => {

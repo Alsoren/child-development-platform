@@ -11,7 +11,7 @@ const create = async (req, res, next) => {
 
 const latest = (req, res, next) => {
   try {
-    res.json({ summary: summaryService.getLatest(req.user, req.childId, req.query.week) });
+    res.json(summaryService.getLatest(req.user, req.childId, req.query.week));
   } catch (err) {
     next(err);
   }

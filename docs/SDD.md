@@ -2,7 +2,7 @@
 
 **Team name:** Kardeşler Software  
 **Version:** ☐ First version ☑ Final (Week 6)  
-**Last updated:** 2026-11-01
+**Last updated:** 2026-11-24
 
 ---
 
@@ -61,11 +61,11 @@ Current state (walking skeleton, v0.0): the login endpoint, a health check and a
 
 ## 3. Data Model
 
-The schema is in `server/src/db/schema.sql` and the first diagram below shows exactly the tables it creates (M1–M4). Tables for M5–M8 are added to the same file when those modules start; they are shown in the second diagram.
+The schema is in `server/src/db/schema.sql` and the first diagram below shows exactly the tables it creates (M1–M4 and M8). Tables for M5 and M6 are added to the same file when those modules start; they are shown in the second diagram.
 
 SQLite stores dates and times as ISO 8601 text: a date is `YYYY-MM-DD`, a date with time is `YYYY-MM-DD HH:MM`. Foreign keys are enabled with `PRAGMA foreign_keys = ON` in `server/src/db/index.js`. Uploaded files are stored in `server/uploads/`, which is not committed to Git; only metadata is in the database.
 
-### Tables in schema.sql (M1–M4)
+### Tables in schema.sql (M1–M4 and M8)
 
 ```mermaid
 erDiagram
@@ -77,6 +77,11 @@ erDiagram
     USER ||--o{ EVENT : creates
     CHILD ||--o{ TASK : has
     USER ||--o{ TASK : assigns
+    CHILD ||--o{ SUMMARY : has
+    USER ||--o{ SUMMARY : requests
+    SUMMARY ||--o{ SUMMARY_SOURCE : "based on"
+    SUMMARY ||--o{ SUMMARY_FEEDBACK : receives
+    USER ||--o{ SUMMARY_FEEDBACK : gives
 
     USER {
         int id PK
@@ -121,40 +126,6 @@ erDiagram
         string completed_at "nullable"
         string created_at
     }
-```
-
-### Tables planned for M5–M8 (not yet in schema.sql)
-
-```mermaid
-erDiagram
-    CHILD ||--o{ ENTRY : has
-    USER ||--o{ ENTRY : writes
-    CHILD ||--o{ DOCUMENT : has
-    USER ||--o{ DOCUMENT : uploads
-    CHILD ||--o{ SUMMARY : has
-    SUMMARY ||--o{ SUMMARY_SOURCE : "based on"
-    SUMMARY ||--o{ SUMMARY_FEEDBACK : receives
-    USER ||--o{ SUMMARY_FEEDBACK : gives
-
-    ENTRY {
-        int id PK
-        int child_id FK
-        int author_id FK
-        string entry_date
-        string text
-        boolean edited
-        string edited_at
-    }
-    DOCUMENT {
-        int id PK
-        int child_id FK
-        int uploaded_by FK
-        string original_name
-        string stored_name
-        string mime_type
-        int size_bytes
-        string uploaded_at
-    }
     SUMMARY {
         int id PK
         int child_id FK
@@ -176,12 +147,45 @@ erDiagram
         int summary_id FK
         int user_id FK
         string rating "helpful, incorrect"
+        string created_at
+    }
+```
+
+`UNIQUE(summary_id, user_id)` on `SUMMARY_FEEDBACK`: a user has one vote per summary, and a second vote replaces the first.
+
+### Tables planned for M5 and M6 (not yet in schema.sql)
+
+```mermaid
+erDiagram
+    CHILD ||--o{ ENTRY : has
+    USER ||--o{ ENTRY : writes
+    CHILD ||--o{ DOCUMENT : has
+    USER ||--o{ DOCUMENT : uploads
+
+    ENTRY {
+        int id PK
+        int child_id FK
+        int author_id FK
+        string entry_date
+        string text
+        boolean edited
+        string edited_at
+    }
+    DOCUMENT {
+        int id PK
+        int child_id FK
+        int uploaded_by FK
+        string original_name
+        string stored_name
+        string mime_type
+        int size_bytes
+        string uploaded_at
     }
 ```
 
 **Notes:**
 - `UNIQUE(child_id, specialist_id)` on `SPECIALIST_LINK`. Unlinking deletes the row, so the next request from that specialist fails the link check immediately.
-- Deleting a child deletes its links, events and tasks (`ON DELETE CASCADE`).
+- Deleting a child deletes its links, events, tasks and summaries (`ON DELETE CASCADE`).
 - The database itself rejects an unknown role, specialist type, development area or task status, and an event that ends before it starts (`CHECK` constraints). The API still validates input and returns `400`.
 - A child's login is a `USER` with role `child`, referenced by `CHILD.user_id` (assumption A2 in the SRS).
 - The week of a task is derived from `due_date` (Monday to Sunday, assumption A6).
@@ -222,9 +226,9 @@ There is no registration endpoint: parent, specialist and child accounts are cre
 | POST | `/api/children/:id/documents` | Upload a PDF or image (multipart) | M6 | Planned |
 | GET | `/api/children/:id/documents/:docId/download` | Download or view a document | M6 | Planned |
 | GET | `/api/children/:id/stats?week=` | Completion rate, total and by area | M7 | Planned |
-| POST | `/api/children/:id/summary?week=` | Generate an AI summary for the caller's role | M8 | Planned |
-| GET | `/api/children/:id/summary?week=` | Latest summary of the week for the caller's role | M8 | Planned |
-| POST | `/api/summaries/:summaryId/feedback` | Mark a summary "helpful" or "incorrect" | M8 | Planned |
+| POST | `/api/children/:id/summary?week=` | Generate an AI summary for the caller's role. `201` with `{ summary }`; `502` if the AI provider fails. A summary has `sources` (`type`, `id`, `title`, `dueDate`) and `myFeedback` (`helpful`, `incorrect` or `null`, the caller's own vote) | M8 | Implemented |
+| GET | `/api/children/:id/summary?week=` | Latest summary of the week for the caller's role. Returns `{ weekStart, weekEnd, summary }`; `summary` is `null` if there is none yet | M8 | Implemented |
+| POST | `/api/summaries/:summaryId/feedback` | Body `{ rating }` with `helpful` or `incorrect`. Returns `{ feedback: { summaryId, rating } }`. Only for a parent or a currently linked specialist, and only for a summary written for their own role; otherwise `404` (same answer as for an unknown id); `400` for another rating | M8 | Implemented |
 
 Error responses: `400` invalid data, `401` missing or expired token, `403` not allowed for this role or child, `404` unknown record, `502` AI provider failed (only for M8). Errors have the form `{ "error": "message" }`.
 
@@ -400,3 +404,4 @@ Environment variables in `server/.env`: `PORT`, `JWT_SECRET`, `JWT_EXPIRES_IN`, 
 | 2026-10-25 | Rewritten to match the Term Project Assignment: SQLite, roles parent/specialist/child, modules M1–M8, access rules, AI module with mock mode | Kardeşler Software |
 | 2026-10-25 | Decided A7 (Gemini API) and A8 (English); removed the GitHub Models option | Kardeşler Software |
 | 2026-11-01 | Final: aligned with the walking skeleton code (repositories instead of models, Tailwind and ESLint in the stack, routes per module), data model now matches `schema.sql` with M5–M8 tables marked as planned, API status column, login flow added to Flow 1 and rejected task to Flow 2, `AI_MODE` replaced by `AI_PROVIDER` | Kardeşler Software |
+| 2026-11-24 | M8: `summaries`, `summary_sources` and new `summary_feedback` moved into the schema diagram; summary and feedback endpoints marked implemented; GET summary now returns the week with `summary` possibly `null`; summary sources carry title and due date, and `myFeedback` added | Okan Can Nazlı |

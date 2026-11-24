@@ -16,7 +16,7 @@ const day = (offset, time = '10:00') => {
 
 const seed = db.transaction(() => {
   // Reset: drop and recreate, so an old app.db always gets the current schema
-  ['summary_sources', 'summaries', 'tasks', 'events', 'specialist_links', 'children', 'users'].forEach((t) =>
+  ['summary_feedback', 'summary_sources', 'summaries', 'tasks', 'events', 'specialist_links', 'children', 'users'].forEach((t) =>
     db.exec(`DROP TABLE IF EXISTS ${t}`)
   );
   db.exec(schemaSql);

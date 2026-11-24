@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import AppLayout, { Section } from '../components/AppLayout';
 import LinkedSpecialists from '../components/LinkedSpecialists';
+import SummaryCard from '../components/SummaryCard';
 import TaskBoard from '../components/TaskBoard';
 import WeeklySchedule from '../components/WeeklySchedule';
 import { getChildren } from '../api/links';
@@ -45,6 +46,9 @@ export default function ParentPage() {
       <Section title="Specialist entries" />
       <Section title="Documents" />
       <Section title="Weekly statistics" />
+      <Section title="AI summary">
+        {childId && <SummaryCard key={childId} childId={childId} />}
+      </Section>
     </AppLayout>
   );
 }

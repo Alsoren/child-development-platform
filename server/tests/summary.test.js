@@ -203,10 +203,10 @@ describe('GET /api/children/:id/summary', () => {
     expect(res.body.summary.text).toBe('Specialist summary');
   });
 
-  test('returns null when the week has no summary', async () => {
+  test('returns the week and null when the week has no summary', async () => {
     const res = await latest(childId, bearer(parentId, 'parent'), '2027-09-08');
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ summary: null });
+    expect(res.body).toEqual({ weekStart: '2027-09-06', weekEnd: '2027-09-12', summary: null });
   });
 
   test.each([
