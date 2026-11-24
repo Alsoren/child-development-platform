@@ -25,4 +25,13 @@ const listChildren = (req, res, next) => {
   }
 };
 
-module.exports = { create, list, listChildren };
+const remove = (req, res, next) => {
+  try {
+    linkService.unlinkSpecialist(req.childId, req.params.specialistId);
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { create, list, listChildren, remove };

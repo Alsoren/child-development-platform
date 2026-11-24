@@ -32,4 +32,13 @@ const listSpecialists = (childId) => ({ specialists: linksRepository.findByChild
 // GET /api/children: the children the logged-in user may open (any role).
 const listChildren = (user) => ({ children: linksRepository.findChildrenForUser(user.id, user.role) });
 
-module.exports = { linkSpecialist, listSpecialists, listChildren, SPECIALIST_TYPES };
+// US-M2-03: the parent unlinks a specialist from the child.
+// Access (parent role, owner of the child) is checked by the middleware before this runs.
+function unlinkSpecialist(childId, specialistIdParam) {
+  const specialistId = Number(specialistIdParam);
+  if (!Number.isInteger(specialistId) || !linksRepository.remove(childId, specialistId)) {
+    throw new HttpError(404, 'This specialist is not linked to the child.');
+  }
+}
+
+module.exports = { linkSpecialist, listSpecialists, listChildren, unlinkSpecialist, SPECIALIST_TYPES };

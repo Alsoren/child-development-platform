@@ -158,3 +158,93 @@ describe('GET /api/children', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('DELETE /api/children/:id/specialists/:specialistId (US-M2-03)', () => {
+  let ownerId, strangerId, specId, kidId;
+
+  beforeAll(() => {
+    ownerId = addUser('unlink-parent@example.com', 'parent');
+    strangerId = addUser('unlink-stranger@example.com', 'parent');
+    specId = addUser('unlink-teacher@example.com', 'specialist');
+    kidId = addChild(ownerId, null, 'Unlink Child');
+  });
+
+  beforeEach(() => {
+    db.prepare('DELETE FROM specialist_links WHERE child_id = ?').run(kidId);
+    db.prepare('INSERT INTO specialist_links (child_id, specialist_id, specialist_type) VALUES (?, ?, ?)')
+      .run(kidId, specId, 'teacher');
+  });
+
+  const unlink = (spec = specId, auth = bearer(ownerId, 'parent'), child = kidId) =>
+    request(app).delete(`/api/children/${child}/specialists/${spec}`).set('Authorization', auth);
+
+  test('the parent unlinks a specialist and the link is removed from the list', async () => {
+    const res = await unlink();
+    expect(res.status).toBe(204);
+    expect(linkCount(kidId)).toBe(0);
+
+    const list = await request(app).get(`/api/children/${kidId}/specialists`).set('Authorization', bearer(ownerId, 'parent'));
+    expect(list.body.specialists).toEqual([]);
+  });
+
+  test('an unlinked specialist with a still valid token gets 403 and no child data', async () => {
+    const specToken = bearer(specId, 'specialist');
+    const before = await request(app).get(`/api/children/${kidId}/events`).set('Authorization', specToken);
+    expect(before.status).toBe(200);
+
+    await unlink();
+
+    for (const path of ['events', 'events/upcoming', 'tasks']) {
+      const res = await request(app).get(`/api/children/${kidId}/${path}`).set('Authorization', specToken);
+      expect(res.status).toBe(403);
+      expect(res.body).not.toHaveProperty('events');
+      expect(res.body).not.toHaveProperty('tasks');
+    }
+    const assign = await request(app).post(`/api/children/${kidId}/tasks`).set('Authorization', specToken)
+      .send({ title: 'Read for 20 minutes', developmentArea: 'cognitive', dueDate: '2026-11-23' });
+    expect(assign.status).toBe(403);
+
+    const children = await request(app).get('/api/children').set('Authorization', specToken);
+    expect(children.body.children.map((c) => c.id)).not.toContain(kidId);
+  });
+
+  test.each([
+    ['a parent who does not own the child (US-M2-05)', () => bearer(strangerId, 'parent')],
+    ['the specialist', () => bearer(specId, 'specialist')],
+  ])('rejects %s with 403 and keeps the link', async (_, auth) => {
+    const res = await unlink(specId, auth());
+    expect(res.status).toBe(403);
+    expect(linkCount(kidId)).toBe(1);
+  });
+
+  test.each([
+    ['a specialist who is not linked', () => addUser(`unlink-x-${Date.now()}@example.com`, 'specialist')],
+    ['an invalid id', () => 'abc'],
+  ])('returns 404 for %s', async (_, spec) => {
+    const res = await unlink(spec());
+    expect(res.status).toBe(404);
+    expect(linkCount(kidId)).toBe(1);
+  });
+});
+  test('a specialist linked to two children sees exactly those two and no others (US-M2-04)', async () => {
+    const parent = addUser('m204-parent@example.com', 'parent');
+    const spec = addUser('m204-teacher@example.com', 'specialist');
+    const first = addChild(parent, null, 'M204 Alpha');
+    const second = addChild(parent, null, 'M204 Beta');
+    addChild(parent, null, 'M204 Not Linked');
+    const linkTo = (id) => db.prepare('INSERT INTO specialist_links (child_id, specialist_id, specialist_type) VALUES (?, ?, ?)')
+      .run(id, spec, 'teacher');
+    linkTo(first);
+    linkTo(second);
+
+    const res = await request(app).get('/api/children').set('Authorization', bearer(spec, 'specialist'));
+    expect(res.status).toBe(200);
+    expect(res.body.children).toEqual([{ id: first, name: 'M204 Alpha' }, { id: second, name: 'M204 Beta' }]);
+  });
+
+  test('a specialist with no links sees an empty list (US-M2-04)', async () => {
+    const spec = addUser('m204-nolinks@example.com', 'specialist');
+    const res = await request(app).get('/api/children').set('Authorization', bearer(spec, 'specialist'));
+    expect(res.status).toBe(200);
+    expect(res.body.children).toEqual([]);
+  });
