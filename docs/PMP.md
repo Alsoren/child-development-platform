@@ -74,12 +74,17 @@ Week 13 is used for the presentation and live demo.
 
 | Epic | Planned for this point | Status (Done / In progress / Not started) |
 |---|---|---|
-| M1 – Login and roles | Email and password login, role-based screens, API rejects unauthorized requests | _Update at review_ |
-| M2 – Linking specialists | Parent links and unlinks a specialist by email; unlinked specialist rejected in the API | _Update at review_ |
-| M3 – Weekly schedule | Parent and linked specialists add events; weekly view | _Update at review_ |
-| M4 – Tasks | Assign tasks, child marks done, assigner sees status | _Update at review_ |
+| M1 – Login and roles | Email and password login, role-based screens, API rejects unauthorized requests | Done. Login, JWT with expiry, `requireRole` and `requireChildAccess`, role-based pages and route guard are merged and tested. |
+| M2 – Linking specialists | Parent links and unlinks a specialist by email; unlinked specialist rejected in the API | In progress. Link, unlink, list and the linked-children list are merged; the unlinked specialist is rejected on every child endpoint. SCRUM-48 (only the owning parent manages links) is still open. |
+| M3 – Weekly schedule | Parent and linked specialists add events; weekly view | Done. Add event, weekly view and upcoming events for the child are merged, with the screens (SCRUM-54). |
+| M4 – Tasks | Assign tasks, child marks done, assigner sees status | Done. Assign task, child marks done, assigner sees the status, with the screens (SCRUM-54). |
 
-**Changes to the plan (if any):** _None yet._
+**Changes to the plan (if any):**
+
+- v0.1 is late. It was planned for week 8 and still waits for SCRUM-48 (M2) and this review. The first end-to-end test is in place: Playwright runs in CI (SCRUM-37) with a smoke test that opens the login page. The end-to-end tests for the three critical flows are planned for v0.2.
+- M8 started earlier than planned. The AI module (prompt builders, mock and Gemini providers, error handling) and the summary endpoint were built while M2 was still open, because they did not depend on M5 to M7. M8 moves from "Sprint 4, 5" to "Sprint 3, 4". The summary uses tasks only for now; entries are added after M5 is merged.
+- The real Gemini call has not been tested with a key yet. Tests and CI use the mock provider.
+- Sprint 4 (M5 to M8, PMP-4, v0.2) is planned from 2026-11-23 to 2026-12-06.
 
 ---
 
